@@ -2,6 +2,8 @@
 
 A simple personal flight log tracker for tracking flight details and pilot experience.
 
+This repository is backed up to GitHub at: https://github.com/Chi-pilot/tracker-app
+
 ## Getting started
 
 1. Activate your Python environment:
@@ -22,9 +24,22 @@ A simple personal flight log tracker for tracking flight details and pilot exper
    ```
 5. Open your browser at `http://127.0.0.1:5000`
 
+## GitHub backup
+
+This project is stored in a public GitHub repository. If you want to work from another machine:
+
+```bash
+git clone https://github.com/Chi-pilot/tracker-app.git
+cd tracker-app
+source /home/iggykhan/venv/bin/activate
+pip install -r requirements.txt
+```
+
 ## Data storage
 
 Logged flights are stored in `flight_log.db` in the project root using SQLite.
+
+Local files that should not be committed are excluded by `.gitignore`.
 
 ## Tracked fields
 

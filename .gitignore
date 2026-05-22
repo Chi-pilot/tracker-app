@@ -7,8 +7,9 @@ __pycache__/
 venv/
 .env
 
-# SQLite database file
+# Local data files
 flight_log.db
+flight_log.json
 
 # Editor files
 *.swp
