@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Flight Log Tracker</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="brand-title">Flight Log Tracker</div>
+      <div class="brand-subtitle">Pilot logbook with multi-leg and search</div>
+    </div>
+    <button id="menu-toggle" class="menu-toggle" type="button">Menu</button>
+    <nav id="main-nav" class="nav-panel">
+      <a href="{{ url_for('index', tab='add') }}" class="{{ 'active' if active_tab == 'add' else '' }}">Add Flight</a>
+      <a href="{{ url_for('index', tab='list') }}" class="{{ 'active' if active_tab == 'list' else '' }}">View Flights</a>
+      <a href="{{ url_for('index', tab='search') }}" class="{{ 'active' if active_tab == 'search' else '' }}">Search Flights</a>
+    </nav>
+  </header>
+  <main>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flash-container">
+          {% for category, message in messages %}
+            <div class="flash flash-{{ category }}">{{ message }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    {% if active_tab == 'list' %}
+      <section class="card">
+        <h2>Logged Flights</h2>
+        {% if not entries %}
+          <p class="empty-state">No flights logged yet. Use the Add Flight tab to create your first entry.</p>
+        {% else %}
+          <div class="flight-list">
+            {% for entry in entries %}
+              <article class="flight-card">
+                <div class="flight-card-header">
+                  <div><strong>{{ entry.date }}</strong> &middot; {{ entry.legs[0].departure }} → {{ entry.legs[-1].arrival }}</div>
+                  <div class="tag">{{ 'Cross-country' if entry.is_cross_country else 'Local' }}</div>
+                </div>
+                <div class="flight-card-grid">
+                  <div><strong>Aircraft</strong><br>{{ entry.aircraft_make_model }}</div>
+                  <div><strong>Registration</strong><br>{{ entry.registration }}</div>
+                  <div><strong>Total</strong><br>{{ entry.total_time }} hrs</div>
+                  <div><strong>PIC</strong><br>{{ entry.pic_time }} hrs</div>
+                  <div><strong>Solo</strong><br>{{ entry.solo_time }} hrs</div>
+                  <div><strong>Dual</strong><br>{{ entry.dual_received_time }} hrs</div>
+                  <div><strong>Day landings</strong><br>{{ entry.day_landings }}</div>
+                  <div><strong>Night landings</strong><br>{{ entry.night_landings }}</div>
+                  <div><strong>Distance</strong><br>{{ entry.total_distance_miles }} miles</div>
+                  <div><strong>Cross-country</strong><br>{{ entry.cross_country_hours }} hrs</div>
+                </div>
+                <div class="leg-summary">
+                  <strong>Legs:</strong>
+                  <ul>
+                    {% for leg in entry.legs %}
+                      <li>{{ leg.departure }} → {{ leg.arrival }} ({{ leg.distance_miles }} miles){% if leg.is_cross_country %} · cross-country{% endif %}</li>
+                    {% endfor %}
+                  </ul>
+                </div>
+                {% if entry.notes %}
+                  <div class="flight-notes"><strong>Notes:</strong> {{ entry.notes }}</div>
+                {% endif %}
+              </article>
+            {% endfor %}
+          </div>
+        {% endif %}
+      </section>
+    {% elif active_tab == 'search' %}
+      <section class="card">
+        <h2>Search Flights</h2>
+        <p class="help-text">Search by airport, state, or date range. Dates can be entered in either order.</p>
+        <form action="{{ url_for('search_route') }}" method="post" class="search-form">
+          <div class="field-grid">
+            <label>Airport / State / Registration<input type="text" name="query" value="{{ search_query }}" placeholder="e.g. IL, KJFK, Florida"></label>
+            <label>Start month<input type="month" name="start_month" value="{{ start_month }}"></label>
+            <label>End month<input type="month" name="end_month" value="{{ end_month }}"></label>
+          </div>
+          <div class="form-actions">
+            <button type="submit">Search</button>
+          </div>
+        </form>
+      </section>
+      {% if search_results is not none %}
+        <section class="card search-results">
+          <h2>Search Results</h2>
+          {% if not search_results %}
+            <p class="empty-state">No flights matched your search criteria.</p>
+          {% else %}
+            <div class="flight-list">
+              {% for entry in search_results %}
+                <article class="flight-card">
+                  <div class="flight-card-header">
+                    <div><strong>{{ entry.date }}</strong> &middot; {{ entry.legs[0].departure }} → {{ entry.legs[-1].arrival }}</div>
+                    <div class="tag">{{ 'Cross-country' if entry.is_cross_country else 'Local' }}</div>
+                  </div>
+                  <div class="flight-card-grid">
+                    <div><strong>Aircraft</strong><br>{{ entry.aircraft_make_model }}</div>
+                    <div><strong>Registration</strong><br>{{ entry.registration }}</div>
+                    <div><strong>Total</strong><br>{{ entry.total_time }} hrs</div>
+                    <div><strong>Distance</strong><br>{{ entry.total_distance_miles }} miles</div>
+                    <div><strong>Cross-country</strong><br>{{ entry.cross_country_hours }} hrs</div>
+                  </div>
+                </article>
+              {% endfor %}
+            </div>
+          {% endif %}
+        </section>
+      {% endif %}
+    {% else %}
+      <section class="card">
+        <h2>Add Flight</h2>
+        <p class="help-text">Add up to three legs. Distance is calculated automatically for each leg.</p>
+        <form id="flight-form" action="{{ url_for('add_flight') }}" method="post" autocomplete="off">
+          <div class="field-grid">
+            <label>Date<input type="date" name="date" value="{{ current_date }}" required></label>
+            <label>Aircraft make/model<input type="text" name="aircraft_make_model" required></label>
+            <label>Registration<input type="text" name="registration" required></label>
+            <label>Total flight time (hours)<input type="number" step="0.1" name="total_time" required></label>
+            <label>PIC time (hours)<input type="number" step="0.1" name="pic_time" required></label>
+            <label>Solo time (hours)<input type="number" step="0.1" name="solo_time" required></label>
+            <label>Dual received time (hours)<input type="number" step="0.1" name="dual_received_time" required></label>
+            <label>Day landings<input type="number" step="1" name="day_landings" required></label>
+            <label>Night landings<input type="number" step="1" name="night_landings" required></label>
+            <label>Notes<textarea name="notes" rows="3"></textarea></label>
+          </div>
+
+          <div class="section-divider">Route legs</div>
+          <div class="leg-grid">
+            {% for i in range(1, 4) %}
+              <div class="leg-card">
+                <h3>Leg {{ i }}</h3>
+                <label>Departure (IATA)<input id="departure_{{ i }}" type="text" name="departure_{{ i }}" maxlength="3" autocomplete="off"></label>
+                <label>Arrival (IATA)<input id="arrival_{{ i }}" type="text" name="arrival_{{ i }}" maxlength="3" autocomplete="off"></label>
+                <div id="distance-status-{{ i }}" class="info-box small">Enter both codes to calculate distance.</div>
+              </div>
+            {% endfor %}
+          </div>
+
+          <div id="total-distance" class="info-box">Total distance will appear once leg codes are entered.</div>
+          <div id="cross-country-status" class="info-box"></div>
+
+          <div class="form-actions">
+            <button type="submit">Save Flight</button>
+          </div>
+        </form>
+      </section>
+    {% endif %}
+  </main>
+
+  <script>
+    const toggleButton = document.getElementById('menu-toggle');
+    const navPanel = document.getElementById('main-nav');
+    if (toggleButton && navPanel) {
+      toggleButton.addEventListener('click', () => {
+        navPanel.classList.toggle('collapsed');
+      });
+    }
+
+    const legs = [1, 2, 3];
+    const totalDistanceElement = document.getElementById('total-distance');
+    const crossCountryStatus = document.getElementById('cross-country-status');
+
+    async function updateDistances() {
+      let totalDistance = 0;
+      let hasCrossCountry = false;
+      let anyLeg = false;
+
+      for (const index of legs) {
+        const departureField = document.getElementById(`departure_${index}`);
+        const arrivalField = document.getElementById(`arrival_${index}`);
+        const statusField = document.getElementById(`distance-status-${index}`);
+
+        if (!departureField || !arrivalField || !statusField) continue;
+
+        const departure = departureField.value.trim().toUpperCase();
+        const arrival = arrivalField.value.trim().toUpperCase();
+
+        if (!departure && !arrival) {
+          statusField.textContent = 'Leave blank to skip this leg.';
+          continue;
+        }
+
+        anyLeg = true;
+        if (!departure || !arrival) {
+          statusField.textContent = 'Both departure and arrival are required for this leg.';
+          continue;
+        }
+
+        if (departure === arrival) {
+          statusField.textContent = 'Departure and arrival must differ.';
+          continue;
+        }
+
+        if (departure.length !== 3 || arrival.length !== 3) {
+          statusField.textContent = 'Use 3-letter IATA codes.';
+          continue;
+        }
+
+        statusField.textContent = 'Calculating distance...';
+        try {
+          const response = await fetch('{{ url_for('airport_distance') }}', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ departure, arrival }),
+          });
+          const result = await response.json();
+          if (!response.ok) {
+            statusField.textContent = result.error || 'Unable to calculate distance.';
+            continue;
+          }
+          totalDistance += result.distance_miles;
+          if (result.is_cross_country) {
+            hasCrossCountry = true;
+          }
+          statusField.textContent = `Distance: ${result.distance_miles.toFixed(1)} miles`;
+        } catch (error) {
+          statusField.textContent = 'Distance lookup failed.';
+        }
+      }
+
+      if (!anyLeg) {
+        totalDistanceElement.textContent = 'Enter at least one leg to calculate total distance.';
+        crossCountryStatus.textContent = '';
+        return;
+      }
+
+      totalDistanceElement.textContent = `Total distance: ${totalDistance.toFixed(1)} miles`;
+      crossCountryStatus.textContent = hasCrossCountry
+        ? 'This flight is cross-country because at least one leg exceeds 50 miles.'
+        : 'No legs exceed 50 miles; cross-country hours will not be logged.';
+    }
+
+    for (const index of legs) {
+      const departureField = document.getElementById(`departure_${index}`);
+      const arrivalField = document.getElementById(`arrival_${index}`);
+      if (departureField) departureField.addEventListener('input', updateDistances);
+      if (arrivalField) arrivalField.addEventListener('input', updateDistances);
+    }
+  </script>
+</body>
+</html>

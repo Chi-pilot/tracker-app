@@ -1,0 +1,36 @@
+[
+  {
+    "date": "2026-05-21",
+    "aircraft_make_model": "RV14",
+    "registration": "N7213WP",
+    "departure": "KPWK",
+    "arrival": "KNPA",
+    "total_time": 3.0,
+    "pic_time": 3.0,
+    "solo_time": 3.0,
+    "dual_received_time": 0.0,
+    "day_landings": 1,
+    "night_landings": 0,
+    "cross_country_hours": 3.0,
+    "distance_miles": null,
+    "is_cross_country": false,
+    "notes": ""
+  },
+  {
+    "date": "2026-05-21",
+    "aircraft_make_model": "RV14",
+    "registration": "N73213",
+    "departure": "PWK",
+    "arrival": "NPA",
+    "total_time": 3.0,
+    "pic_time": 3.0,
+    "solo_time": 3.0,
+    "dual_received_time": 0.0,
+    "day_landings": 1,
+    "night_landings": 0,
+    "cross_country_hours": 3.0,
+    "distance_miles": 812.7196373725724,
+    "is_cross_country": true,
+    "notes": "Flight to Pensacola"
+  }
+]

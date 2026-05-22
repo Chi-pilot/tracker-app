@@ -1,0 +1,15 @@
+# Python cache and compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+.env
+
+# SQLite database file
+flight_log.db
+
+# Editor files
+*.swp
+*~
