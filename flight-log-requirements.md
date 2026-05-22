@@ -39,10 +39,10 @@ Create a personal flight log tracker that stores flight records locally and prov
 - Support search by date range using month/year values.
 - Accept start and end dates in either order and return results between them.
 - Include flights where either departure or arrival matches the search criteria.
-
 ## Airport metadata requirements
-- Retrieve airport information from Airport Gap.
-- Store city and state for each airport.
+- Retrieve airport information (name, city, state/region, country) from Airport Gap (preferred).
+- As an alternative data source, airport metadata may be retrieved from other services such as https://airportdb.io/ when needed.
+- Store city, state/region, and country for each airport record so searches by state or country work.
 - Use the Airport Gap token from the `AIRPORTGAP_TOKEN` environment variable when available.
 
 ## Storage requirements
